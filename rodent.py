@@ -46,7 +46,7 @@ def create_dns():
 
         command = cmd + "c:\Windows\System32\dnscmd.exe /RecordAdd #{zone} #{fqdn}. #{type} #{value}"
 
-        #os.call(command)
+        os.call(command)
 
         message = 'OK ' + zone, "cmd:", command
 
