@@ -71,4 +71,4 @@ def is_64_bit():
         return True
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0')
