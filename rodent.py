@@ -57,7 +57,7 @@ def create_dns():
 
         zone = dns.name.from_text(fqdn).split(3)[1].to_text(omit_final_dot=True)
 
-        if not dns_found(fqdn, type, name_server ):
+        if not dns_found(fqdn, type):
             if is_64_bit():
                 #cmd = r'c:\windows\sysnative\cmd.exe /c '
                 command = "c:\Windows\System32\dnscmd.exe /RecordAdd #{zone} #{fqdn}. #{type} #{value}"
