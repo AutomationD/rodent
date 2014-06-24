@@ -35,6 +35,8 @@ app = Flask(__name__)
 # server = 'ns1.docstoc.corp'
 
 ################ DNS ################
+
+
 @app.route('/dns/', methods=['POST'])
 def create_dns():
     result = {}
@@ -69,7 +71,7 @@ def create_dns():
             #command = cmd + "c:\Windows\System32\dnscmd.exe /RecordAdd #{zone} #{fqdn}. #{type} #{value}"
             print command
 
-            process = Popen([command], stdout=PIPE)
+            process = Popen(command, stdout=PIPE)
             (output, err) = process.communicate()
             print "output:"
             print output
@@ -82,7 +84,7 @@ def create_dns():
                 result['response_code'] = 500
                 result['message'] = "Error running #{command}. Error Code #{result['exit_code']}"
             else:
-                if dns_found(fqdn):
+                if dns_found(fqdn,type):
                     result['exit_code'] = 0
                     result['response_code'] = 200
                     result['message'] = "Successfully created #{fqdn}"
