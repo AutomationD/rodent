@@ -61,23 +61,19 @@ def create_dns():
 
         if not dns_found(fqdn, type):
             if is_64_bit():
-                #cmd = r'c:\windows\sysnative\cmd.exe /c '
                 command = "c:\Windows\System32\dnscmd.exe /RecordAdd #{zone} #{fqdn}. #{type} #{value}"
             else:
-                #cmd = r'c:\windows\system32\cmd.exe /c '
                 command = "c:\Windows\sysnative\dnscmd.exe /RecordAdd #{zone} #{fqdn}. #{type} #{value}"
 
-
-            #command = cmd + "c:\Windows\System32\dnscmd.exe /RecordAdd #{zone} #{fqdn}. #{type} #{value}"
-            print command
+            logging.debug(command)
 
             process = Popen(command, stdout=PIPE)
             (output, err) = process.communicate()
-            print "output:"
-            print output
 
-            print "err:"
-            print err
+            logging.debug("output: \n" + output)
+
+            logging.debug("err: \n" + err)
+
             result['exit_code'] = process.wait()
 
             if result['exit_code'] != 0:
@@ -88,24 +84,27 @@ def create_dns():
                     result['exit_code'] = 0
                     result['response_code'] = 200
                     result['message'] = "Successfully created #{fqdn}"
+                    logging.debug(result['message'])
                 else:
                     result['exit_code'] = 1
                     result['response_code'] = 404
                     result['message'] = "Can't find #{fqdn}. Could be a bug."
+                    logging.error(result['message'])
         else:
             result['exit_code'] = 1
             result['response_code'] = 500
             result['message'] = "#{fqdn} Already exists."
+            logging.error(result['message'])
 
     else:
         result['message'] = 'Not implemented for ' + os.name
         result['response_code'] = 501
+        logging.error(result['message'])
     return make_response(jsonify({'result': result['message']}), result['response_code'])
 
-def command_report(stdin, stderr, exit_code):
-    return True
-
-
+#def command_report(stdin, stderr, exit_code):
+#    # check if stdin, stderr contains "completed successfully" and return true
+#    return True
 
 
 def dns_found(fqdn, type):
