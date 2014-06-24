@@ -11,3 +11,6 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 BIND_IP = '0.0.0.0'
 
 DNS_ENABLED = True
+
+DNS_SERVER_IP = '192.168.1.11'
+# DNS_SERVER_IP = '127.0.0.1'

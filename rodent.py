@@ -9,12 +9,12 @@ import struct
 import re
 import sys
 import os
-import subprocess as sb
+from subprocess import Popen, PIPE
 import dns.name
+import dns.resolver
 from flask import Flask
+from flask import jsonify, make_response, request, abort
 import logging
-from flask import jsonify,make_response, request, abort
-import socket
 
 ## Logging
 logging.basicConfig(format='%(asctime)s %(message)s', filename='rodent.log', level=logging.DEBUG, stream=sys.stdout)
@@ -44,6 +44,7 @@ def create_dns():
         fqdn = request.args.get('fqdn')
         value = request.args.get('value')
         type = request.args.get('type')
+        name_server = request.args.get('name_server')
 
         if not fqdn:
             return make_response(jsonify({'error': 'fqdn must be present'}), 404)
@@ -51,10 +52,12 @@ def create_dns():
             return make_response(jsonify({'error': 'value must be present'}), 404)
         if not type:
             return make_response(jsonify({'error': 'type must be present'}), 404)
+        if not type:
+            return make_response(jsonify({'error': 'name_server must be present'}), 404)
 
         zone = dns.name.from_text(fqdn).split(3)[1].to_text(omit_final_dot=True)
 
-        if not dns_found(fqdn):
+        if not dns_found(fqdn, type, name_server ):
             if is_64_bit():
                 #cmd = r'c:\windows\sysnative\cmd.exe /c '
                 command = "c:\Windows\System32\dnscmd.exe /RecordAdd #{zone} #{fqdn}. #{type} #{value}"
@@ -66,8 +69,15 @@ def create_dns():
             #command = cmd + "c:\Windows\System32\dnscmd.exe /RecordAdd #{zone} #{fqdn}. #{type} #{value}"
             print command
 
+            process = Popen([command], stdout=PIPE)
+            (output, err) = process.communicate()
+            print "output:"
+            print output
 
-            result['exit_code'] = sb.call(command)
+            print "err:"
+            print err
+            result['exit_code'] = process.wait()
+
             if result['exit_code'] != 0:
                 result['response_code'] = 500
                 result['message'] = "Error running #{command}. Error Code #{result['exit_code']}"
@@ -88,13 +98,34 @@ def create_dns():
         result['response_code'] = 501
         return make_response(jsonify({'result': result['message']}), result['response_code'])
 
+def command_report(stdin, stderr, exit_code):
+    return True
 
-def dns_found(fqdn):
+
+
+
+def dns_found(fqdn, type):
+
+    resolver = dns.resolver.Resolver(configure=False)
+
+    if not config.DNS_SERVER_IP:
+        config.DNS_SERVER_IP = '127.0.0.1'
+
+    logging.debug(config.DNS_SERVER_IP)
+    resolver.nameservers = [config.DNS_SERVER_IP, ]
+
     try:
-        socket.gethostbyname(fqdn)
-        return True
-    except socket.error:
+        resolver.timeout = 5
+        resolver.lifetime = 10
+        result = resolver.query(fqdn, type)
+
+        if result:
+            return True
+        else:
+            return False
+    except dns.exeption.DNSException:
         return False
+
 ################################################
 
 @app.errorhandler(404)
