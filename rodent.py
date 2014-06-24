@@ -84,7 +84,7 @@ def create_dns():
                 result['response_code'] = 500
                 result['message'] = "Error running #{command}. Error Code #{result['exit_code']}"
             else:
-                if dns_found(fqdn,type):
+                if dns_found(fqdn, type):
                     result['exit_code'] = 0
                     result['response_code'] = 200
                     result['message'] = "Successfully created #{fqdn}"
@@ -92,13 +92,15 @@ def create_dns():
                     result['exit_code'] = 1
                     result['response_code'] = 404
                     result['message'] = "Can't find #{fqdn}. Could be a bug."
+        else:
+            result['exit_code'] = 1
+            result['response_code'] = 500
+            result['message'] = "#{fqdn} Already exists."
 
-
-            return make_response(jsonify({'result': result['message']}), result['response_code'])
     else:
         result['message'] = 'Not implemented for ' + os.name
         result['response_code'] = 501
-        return make_response(jsonify({'result': result['message']}), result['response_code'])
+    return make_response(jsonify({'result': result['message']}), result['response_code'])
 
 def command_report(stdin, stderr, exit_code):
     return True
