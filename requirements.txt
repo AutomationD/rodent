@@ -1,3 +1,0 @@
-interpy
-flask
-dnspython
