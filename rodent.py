@@ -37,6 +37,7 @@ app = Flask(__name__)
 ################ DNS ################
 @app.route('/dns/', methods=['POST'])
 def create_dns():
+    result = {}
     # fqdn=test15.docstoc.corp&value=192.168.5.1&type=A
     if os.name == 'nt':
 
@@ -65,7 +66,7 @@ def create_dns():
             #command = cmd + "c:\Windows\System32\dnscmd.exe /RecordAdd #{zone} #{fqdn}. #{type} #{value}"
             print command
 
-            result = {}
+
             result['exit_code'] = sb.call(command)
             if result['exit_code'] != 0:
                 result['response_code'] = 500
@@ -81,10 +82,11 @@ def create_dns():
                     result['message'] = "Can't find #{fqdn}. Could be a bug."
 
 
-            return make_response(jsonify({'response': result['message']}), result['response_code'])
+            return make_response(jsonify({'result': result['message']}), result['response_code'])
     else:
-        message = 'Not implemented for ' + os.name
-        return make_response(jsonify({'error': message}), 500)
+        result['message'] = 'Not implemented for ' + os.name
+        result['response_code'] = 501
+        return make_response(jsonify({'result': result['message']}), result['response_code'])
 
 
 def dns_found(fqdn):
