@@ -127,7 +127,7 @@ def dns_found(fqdn, type):
             return True
         else:
             return False
-    except dns.exeption.DNSException:
+    except:
         return False
 
 ################################################
