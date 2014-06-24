@@ -55,11 +55,13 @@ def create_dns():
 
         if not dns_found(fqdn):
             if is_64_bit():
-                cmd = r'c:\windows\sysnative\cmd.exe /c '
+                #cmd = r'c:\windows\sysnative\cmd.exe /c '
+                command = "c:\Windows\sysnative\dnscmd.exe /RecordAdd #{zone} #{fqdn}. #{type} #{value}"
             else:
-                cmd = r'c:\windows\system32\cmd.exe /c '
+                #cmd = r'c:\windows\system32\cmd.exe /c '
+                command = "c:\Windows\System32\dnscmd.exe /RecordAdd #{zone} #{fqdn}. #{type} #{value}"
 
-            command = cmd + "c:\Windows\System32\dnscmd.exe /RecordAdd #{zone} #{fqdn}. #{type} #{value}"
+            #command = cmd + "c:\Windows\System32\dnscmd.exe /RecordAdd #{zone} #{fqdn}. #{type} #{value}"
             print command
 
             sb.call(command)
