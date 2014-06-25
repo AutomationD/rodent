@@ -5,16 +5,17 @@ from __future__ import unicode_literals
 __author__ = 'dmitry'
 
 import config
-import struct
+
 import re
 import sys
 import os
 from subprocess import Popen, PIPE
-import dns.name
-import dns.resolver
 from flask import Flask
 from flask import jsonify, make_response, request, abort
 import logging
+
+
+
 
 ## Logging
 logging.basicConfig(format='%(asctime)s %(message)s', filename='rodent.log', level=logging.DEBUG, stream=sys.stdout)
@@ -34,11 +35,75 @@ app = Flask(__name__)
 ## global (replace by configuration params)
 # server = 'ns1.docstoc.corp'
 
-################ DNS ################
+###################### jdog> ######################
+@app.route('/jdog/test/<int:test_id>/stop', methods=['POST'])
+def test_stop(test_id):
+    # Stop the test with no timeout error
+    return True
 
 
+@app.route('/jdog/test/<int:test_id>/start/', methods=['POST'])
+def test_start(test_id):
+    import uuid
+    import time
+    import signal
+    from selenium import webdriver
+
+    logging.debug("test_id: " + str(test_id))
+    result = {}
+
+
+    os.environ['SELENIUM_SERVER_JAR'] = os.path.join(os.path.dirname(os.path.realpath(__file__)), "selenium-server-standalone.jar")
+
+
+    #Following are optional required
+    from selenium.webdriver.common.by import By
+    from selenium.webdriver.support.ui import Select
+    from selenium.common.exceptions import NoSuchElementException
+
+
+    if not test_id:
+        return make_response(jsonify({'error': 'test_id must be present'}), 500)
+
+    baseurl = "http://stg.quickbookslicenses.com/jdog/integration/endToEndRegistration.html?"+"&test_id="+str(test_id)
+
+    ## Spawn each driver in a separate python queue, that will have test_id in it.
+    result['message'] = 'Created id:' + str(test_id)
+    result['response_code'] = 200
+    logging.debug(result['message'])
+
+
+
+    driver = webdriver.Chrome(os.path.join(os.path.dirname(os.path.realpath(__file__)), "chromedriver"))
+    time.sleep(3)
+    driver.get(baseurl)
+    # driver.close()
+
+    driver = webdriver.Firefox()
+
+    time.sleep(3)
+    driver.get(baseurl)
+    # driver.close()
+
+    driver = webdriver.Safari()
+    time.sleep(3)
+    driver.get(baseurl)
+    
+    return make_response(jsonify({'result': result['message']}), result['response_code'])
+
+
+    ## Start Timer
+
+    ## IF Timer not stopped - ERORRRRRR!
+
+###################### <jdog ######################
+
+###################### DNS> ######################
 @app.route('/dns/', methods=['POST'])
 def create_dns():
+    import struct
+    import dns.name
+    import dns.resolver
     result = {}
     # fqdn=test15.docstoc.corp&value=192.168.5.1&type=A
     if os.name == 'nt':
@@ -102,10 +167,6 @@ def create_dns():
         logging.error(result['message'])
     return make_response(jsonify({'result': result['message']}), result['response_code'])
 
-#def command_report(stdin, stderr, exit_code):
-#    # check if stdin, stderr contains "completed successfully" and return true
-#    return True
-
 
 def dns_found(fqdn, type):
 
@@ -128,8 +189,7 @@ def dns_found(fqdn, type):
             return False
     except:
         return False
-
-################################################
+###################### <DNS ######################
 
 @app.errorhandler(404)
 def not_found(error):
