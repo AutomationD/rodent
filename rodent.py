@@ -114,7 +114,7 @@ def test_start(test_id):
 
 ###################### DNS> ######################
 @app.route('/dns/', methods=['DELETE'])
-def remove_dns(name_server='localhost'):
+def remove_dns(type='A', name_server='localhost'):
     import struct
     import dns.name
     import dns.resolver
@@ -123,6 +123,10 @@ def remove_dns(name_server='localhost'):
     if os.name == 'nt':
 
         fqdn = request.args.get('fqdn')
+        if request.args.get('type'):
+            type = request.args.get('type')
+
+
         if request.args.get('name_server'):
             name_server = request.args.get('name_server')
 
