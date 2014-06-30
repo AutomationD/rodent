@@ -14,6 +14,8 @@ from flask import Flask
 from flask import jsonify, make_response, request, abort
 import logging
 
+from Queue import Queue
+
 
 
 
@@ -32,10 +34,18 @@ root.addHandler(ch)
 app = Flask(__name__)
 
 
+tasks = Queue(maxsize=0)
+
 ## global (replace by configuration params)
 # server = 'ns1.docstoc.corp'
 
+
 ###################### jdog> ######################
+@app.route('/jdog/test/<int:test_id>', methods=['GET'])
+def test_get(test_id):
+    tasks
+
+
 @app.route('/jdog/test/<int:test_id>/stop', methods=['POST'])
 def test_stop(test_id):
     # Stop the test with no timeout error
@@ -68,28 +78,32 @@ def test_start(test_id):
     baseurl = "http://stg.quickbookslicenses.com/jdog/integration/endToEndRegistration.html?"+"&test_id="+str(test_id)
 
     ## Spawn each driver in a separate python queue, that will have test_id in it.
-    result['message'] = 'Created id:' + str(test_id)
-    result['response_code'] = 200
-    logging.debug(result['message'])
+
 
 
 
     driver = webdriver.Chrome(os.path.join(os.path.dirname(os.path.realpath(__file__)), "chromedriver"))
     time.sleep(3)
     driver.get(baseurl)
-    # driver.close()
+    driver.close()
+    #
+    # driver = webdriver.Firefox()
+    #
+    # time.sleep(3)
+    # driver.get(baseurl)
+    # # driver.close()
+    #
+    # driver = webdriver.Safari()
+    # time.sleep(3)
+    # driver.get(baseurl)
 
-    driver = webdriver.Firefox()
+    result['message'] = 'Started id:' + str(test_id), driver.session_id
+    result['response_code'] = 200
+    logging.debug(result['message'])
 
-    time.sleep(3)
-    driver.get(baseurl)
-    # driver.close()
-
-    driver = webdriver.Safari()
-    time.sleep(3)
-    driver.get(baseurl)
-    
     return make_response(jsonify({'result': result['message']}), result['response_code'])
+
+    tasks.put(task_id)
 
 
     ## Start Timer
@@ -99,8 +113,70 @@ def test_start(test_id):
 ###################### <jdog ######################
 
 ###################### DNS> ######################
+@app.route('/dns/', methods=['DELETE'])
+def remove_dns(name_server='localhost'):
+    import struct
+    import dns.name
+    import dns.resolver
+    result = {}
+    # fqdn=test15.docstoc.corp&value=192.168.5.1&type=A
+    if os.name == 'nt':
+
+        fqdn = request.args.get('fqdn')
+        if request.args.get('name_server'):
+            name_server = request.args.get('name_server')
+
+        if not fqdn:
+            return make_response(jsonify({'error': 'fqdn must be present'}), 404)
+
+
+        zone = dns.name.from_text(fqdn).split(3)[1].to_text(omit_final_dot=True)
+
+        if dns_found(fqdn, type):
+            if is_64_bit():
+                command = "c:\Windows\System32\dnscmd.exe /RecordDelete #{zone} #{fqdn}. A /f"
+            else:
+                command = "c:\Windows\sysnative\dnscmd.exe /RecordDelete #{zone} #{fqdn}. A /f"
+
+            logging.debug(command)
+
+            process = Popen(command, stdout=PIPE)
+            (output, err) = process.communicate()
+
+            logging.debug("output: \n" + output)
+
+            logging.debug("err: \n" + err)
+
+            result['exit_code'] = process.wait()
+
+            if result['exit_code'] != 0:
+                result['response_code'] = 500
+                result['message'] = "Error running #{command}. Error Code #{result['exit_code']}"
+            else:
+                if not dns_found(fqdn, type):
+                    result['exit_code'] = 0
+                    result['response_code'] = 200
+                    result['message'] = "Successfully deleted #{fqdn}"
+                    logging.debug(result['message'])
+                else:
+                    result['exit_code'] = 1
+                    result['response_code'] = 404
+                    result['message'] = "#{fqdn} is still there. Could be a bug."
+                    logging.error(result['message'])
+        else:
+            result['exit_code'] = 1
+            result['response_code'] = 500
+            result['message'] = "#{fqdn} Already exists."
+            logging.error(result['message'])
+
+    else:
+        result['message'] = 'Not implemented for ' + os.name
+        result['response_code'] = 501
+        logging.error(result['message'])
+    return make_response(jsonify({'result': result['message']}), result['response_code'])
+
 @app.route('/dns/', methods=['POST'])
-def create_dns():
+def create_dns(name_server='localhost'):
     import struct
     import dns.name
     import dns.resolver
@@ -111,7 +187,8 @@ def create_dns():
         fqdn = request.args.get('fqdn')
         value = request.args.get('value')
         type = request.args.get('type')
-        name_server = request.args.get('name_server')
+        if request.args.get('name_server'):
+            name_server = request.args.get('name_server')
 
         if not fqdn:
             return make_response(jsonify({'error': 'fqdn must be present'}), 404)
@@ -119,8 +196,6 @@ def create_dns():
             return make_response(jsonify({'error': 'value must be present'}), 404)
         if not type:
             return make_response(jsonify({'error': 'type must be present'}), 404)
-        if not type:
-            return make_response(jsonify({'error': 'name_server must be present'}), 404)
 
         zone = dns.name.from_text(fqdn).split(3)[1].to_text(omit_final_dot=True)
 
@@ -147,7 +222,7 @@ def create_dns():
             else:
                 if dns_found(fqdn, type):
                     result['exit_code'] = 0
-                    result['response_code'] = 200
+                    result['response_code'] = 201
                     result['message'] = "Successfully created #{fqdn}"
                     logging.debug(result['message'])
                 else:
