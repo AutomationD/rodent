@@ -139,6 +139,7 @@ def remove_dns(type='A', name_server='localhost'):
             zone = dns.name.from_text(fqdn).split(3)[1].to_text(omit_final_dot=True)
 
             if dns_found(fqdn, type):
+
                 if is_64_bit():
                     command = "c:\Windows\System32\dnscmd.exe /RecordDelete #{zone} #{fqdn}. A /f"
                 else:
@@ -172,7 +173,7 @@ def remove_dns(type='A', name_server='localhost'):
             else:
                 result['exit_code'] = 1
                 result['response_code'] = 500
-                result['message'] = "#{fqdn} Already exists."
+                result['message'] = "#{fqdn} Does not exist."
                 logging.error(result['message'])
 
         else:
@@ -247,18 +248,21 @@ def dns_found(fqdn, type):
     import dns.name
     import dns.resolver
 
+    logging.debug("Checking if", fqdn, "type ", type, "exists")
+
     resolver = dns.resolver.Resolver(configure=False)
 
     if not config.DNS_SERVER_IP:
         config.DNS_SERVER_IP = '127.0.0.1'
 
-    logging.debug(config.DNS_SERVER_IP)
+    logging.debug("Using DNS server:", config.DNS_SERVER_IP)
     resolver.nameservers = [config.DNS_SERVER_IP, ]
 
     try:
         resolver.timeout = 5
         resolver.lifetime = 10
         result = resolver.query(fqdn, type)
+        logging.debug(fqdn, "resolved to", result)
 
         if result:
             return True
