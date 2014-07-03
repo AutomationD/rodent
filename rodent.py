@@ -248,7 +248,7 @@ def dns_found(fqdn, type):
     import dns.name
     import dns.resolver
 
-    logging.debug("Checking if", fqdn, "type ", type, "exists")
+    logging.debug("Checking if" + fqdn + "type " + type + "exists")
 
     resolver = dns.resolver.Resolver(configure=False)
 
@@ -257,7 +257,7 @@ def dns_found(fqdn, type):
     else:
         dns_server_ip = config.DNS_SERVER_IP
 
-    logging.debug("Using DNS server:", dns_server_ip)
+    logging.debug("Using DNS server:" + dns_server_ip)
     resolver.nameservers = [dns_server_ip, ]
 
     try:
