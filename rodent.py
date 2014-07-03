@@ -253,10 +253,12 @@ def dns_found(fqdn, type):
     resolver = dns.resolver.Resolver(configure=False)
 
     if not config.DNS_SERVER_IP:
-        config.DNS_SERVER_IP = '127.0.0.1'
+        dns_server_ip = '127.0.0.1'
+    else:
+        dns_server_ip = config.DNS_SERVER_IP
 
-    logging.debug("Using DNS server:", config.DNS_SERVER_IP)
-    resolver.nameservers = [config.DNS_SERVER_IP, ]
+    logging.debug("Using DNS server:", dns_server_ip)
+    resolver.nameservers = [dns_server_ip, ]
 
     try:
         resolver.timeout = 5
