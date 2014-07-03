@@ -6,6 +6,7 @@ __author__ = 'dmitry'
 
 import config
 
+
 import re
 import sys
 import os
@@ -243,6 +244,8 @@ def remove_dns(type='A', name_server='localhost'):
         return make_response(jsonify({'result': result['message']}), result['response_code'])
 
 def dns_found(fqdn, type):
+    import dns.name
+    import dns.resolver
 
     resolver = dns.resolver.Resolver(configure=False)
 
