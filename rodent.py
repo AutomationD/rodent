@@ -113,139 +113,134 @@ def test_start(test_id):
 ###################### <jdog ######################
 
 ###################### DNS> ######################
-@app.route('/dns/', methods=['DELETE'])
+@app.route('/dns/', methods=['POST','DELETE'])
 def remove_dns(type='A', name_server='localhost'):
     import struct
     import dns.name
     import dns.resolver
     result = {}
-    # fqdn=test15.docstoc.corp&value=192.168.5.1&type=A
-    if os.name == 'nt':
+    if request.method == 'DELETE':
+        # fqdn=test15.docstoc.corp&value=192.168.5.1&type=A
+        if os.name == 'nt':
 
-        fqdn = request.args.get('fqdn')
-        if request.args.get('type'):
+            fqdn = request.args.get('fqdn')
+            if request.args.get('type'):
+                type = request.args.get('type')
+
+
+            if request.args.get('name_server'):
+                name_server = request.args.get('name_server')
+
+            if not fqdn:
+                return make_response(jsonify({'error': 'fqdn must be present'}), 404)
+
+
+            zone = dns.name.from_text(fqdn).split(3)[1].to_text(omit_final_dot=True)
+
+            if dns_found(fqdn, type):
+                if is_64_bit():
+                    command = "c:\Windows\System32\dnscmd.exe /RecordDelete #{zone} #{fqdn}. A /f"
+                else:
+                    command = "c:\Windows\sysnative\dnscmd.exe /RecordDelete #{zone} #{fqdn}. A /f"
+
+                logging.debug(command)
+
+                process = Popen(command, stdout=PIPE)
+                (output, err) = process.communicate()
+
+                logging.debug("output: \n" + output)
+
+                logging.debug("err: \n" + err)
+
+                result['exit_code'] = process.wait()
+
+                if result['exit_code'] != 0:
+                    result['response_code'] = 500
+                    result['message'] = "Error running #{command}. Error Code #{result['exit_code']}"
+                else:
+                    if not dns_found(fqdn, type):
+                        result['exit_code'] = 0
+                        result['response_code'] = 200
+                        result['message'] = "Successfully deleted #{fqdn}"
+                        logging.debug(result['message'])
+                    else:
+                        result['exit_code'] = 1
+                        result['response_code'] = 404
+                        result['message'] = "#{fqdn} is still there. Could be a bug."
+                        logging.error(result['message'])
+            else:
+                result['exit_code'] = 1
+                result['response_code'] = 500
+                result['message'] = "#{fqdn} Already exists."
+                logging.error(result['message'])
+
+        else:
+            result['message'] = 'Not implemented for ' + os.name
+            result['response_code'] = 501
+            logging.error(result['message'])
+        return make_response(jsonify({'result': result['message']}), result['response_code'])
+    elif request.method == 'POST':
+
+        # fqdn=test15.docstoc.corp&value=192.168.5.1&type=A
+        if os.name == 'nt':
+
+            fqdn = request.args.get('fqdn')
+            value = request.args.get('value')
             type = request.args.get('type')
+            if request.args.get('name_server'):
+                name_server = request.args.get('name_server')
 
+            if not fqdn:
+                return make_response(jsonify({'error': 'fqdn must be present'}), 404)
+            if not value:
+                return make_response(jsonify({'error': 'value must be present'}), 404)
+            if not type:
+                return make_response(jsonify({'error': 'type must be present'}), 404)
 
-        if request.args.get('name_server'):
-            name_server = request.args.get('name_server')
+            zone = dns.name.from_text(fqdn).split(3)[1].to_text(omit_final_dot=True)
 
-        if not fqdn:
-            return make_response(jsonify({'error': 'fqdn must be present'}), 404)
-
-
-        zone = dns.name.from_text(fqdn).split(3)[1].to_text(omit_final_dot=True)
-
-        if dns_found(fqdn, type):
-            if is_64_bit():
-                command = "c:\Windows\System32\dnscmd.exe /RecordDelete #{zone} #{fqdn}. A /f"
-            else:
-                command = "c:\Windows\sysnative\dnscmd.exe /RecordDelete #{zone} #{fqdn}. A /f"
-
-            logging.debug(command)
-
-            process = Popen(command, stdout=PIPE)
-            (output, err) = process.communicate()
-
-            logging.debug("output: \n" + output)
-
-            logging.debug("err: \n" + err)
-
-            result['exit_code'] = process.wait()
-
-            if result['exit_code'] != 0:
-                result['response_code'] = 500
-                result['message'] = "Error running #{command}. Error Code #{result['exit_code']}"
-            else:
-                if not dns_found(fqdn, type):
-                    result['exit_code'] = 0
-                    result['response_code'] = 200
-                    result['message'] = "Successfully deleted #{fqdn}"
-                    logging.debug(result['message'])
+            if not dns_found(fqdn, type):
+                if is_64_bit():
+                    command = "c:\Windows\System32\dnscmd.exe /RecordAdd #{zone} #{fqdn}. #{type} #{value}"
                 else:
-                    result['exit_code'] = 1
-                    result['response_code'] = 404
-                    result['message'] = "#{fqdn} is still there. Could be a bug."
-                    logging.error(result['message'])
-        else:
-            result['exit_code'] = 1
-            result['response_code'] = 500
-            result['message'] = "#{fqdn} Already exists."
-            logging.error(result['message'])
+                    command = "c:\Windows\sysnative\dnscmd.exe /RecordAdd #{zone} #{fqdn}. #{type} #{value}"
 
-    else:
-        result['message'] = 'Not implemented for ' + os.name
-        result['response_code'] = 501
-        logging.error(result['message'])
-    return make_response(jsonify({'result': result['message']}), result['response_code'])
+                logging.debug(command)
 
-@app.route('/dns/', methods=['POST'])
-def create_dns(name_server='localhost'):
-    import struct
-    import dns.name
-    import dns.resolver
-    result = {}
-    # fqdn=test15.docstoc.corp&value=192.168.5.1&type=A
-    if os.name == 'nt':
+                process = Popen(command, stdout=PIPE)
+                (output, err) = process.communicate()
 
-        fqdn = request.args.get('fqdn')
-        value = request.args.get('value')
-        type = request.args.get('type')
-        if request.args.get('name_server'):
-            name_server = request.args.get('name_server')
+                logging.debug("output: \n" + output)
 
-        if not fqdn:
-            return make_response(jsonify({'error': 'fqdn must be present'}), 404)
-        if not value:
-            return make_response(jsonify({'error': 'value must be present'}), 404)
-        if not type:
-            return make_response(jsonify({'error': 'type must be present'}), 404)
+                logging.debug("err: \n" + err)
 
-        zone = dns.name.from_text(fqdn).split(3)[1].to_text(omit_final_dot=True)
+                result['exit_code'] = process.wait()
 
-        if not dns_found(fqdn, type):
-            if is_64_bit():
-                command = "c:\Windows\System32\dnscmd.exe /RecordAdd #{zone} #{fqdn}. #{type} #{value}"
-            else:
-                command = "c:\Windows\sysnative\dnscmd.exe /RecordAdd #{zone} #{fqdn}. #{type} #{value}"
-
-            logging.debug(command)
-
-            process = Popen(command, stdout=PIPE)
-            (output, err) = process.communicate()
-
-            logging.debug("output: \n" + output)
-
-            logging.debug("err: \n" + err)
-
-            result['exit_code'] = process.wait()
-
-            if result['exit_code'] != 0:
-                result['response_code'] = 500
-                result['message'] = "Error running #{command}. Error Code #{result['exit_code']}"
-            else:
-                if dns_found(fqdn, type):
-                    result['exit_code'] = 0
-                    result['response_code'] = 201
-                    result['message'] = "Successfully created #{fqdn}"
-                    logging.debug(result['message'])
+                if result['exit_code'] != 0:
+                    result['response_code'] = 500
+                    result['message'] = "Error running #{command}. Error Code #{result['exit_code']}"
                 else:
-                    result['exit_code'] = 1
-                    result['response_code'] = 404
-                    result['message'] = "Can't find #{fqdn}. Could be a bug."
-                    logging.error(result['message'])
+                    if dns_found(fqdn, type):
+                        result['exit_code'] = 0
+                        result['response_code'] = 201
+                        result['message'] = "Successfully created #{fqdn}"
+                        logging.debug(result['message'])
+                    else:
+                        result['exit_code'] = 1
+                        result['response_code'] = 404
+                        result['message'] = "Can't find #{fqdn}. Could be a bug."
+                        logging.error(result['message'])
+            else:
+                result['exit_code'] = 1
+                result['response_code'] = 500
+                result['message'] = "#{fqdn} Already exists."
+                logging.error(result['message'])
+
         else:
-            result['exit_code'] = 1
-            result['response_code'] = 500
-            result['message'] = "#{fqdn} Already exists."
+            result['message'] = 'Not implemented for ' + os.name
+            result['response_code'] = 501
             logging.error(result['message'])
-
-    else:
-        result['message'] = 'Not implemented for ' + os.name
-        result['response_code'] = 501
-        logging.error(result['message'])
-    return make_response(jsonify({'result': result['message']}), result['response_code'])
-
+        return make_response(jsonify({'result': result['message']}), result['response_code'])
 
 def dns_found(fqdn, type):
 
