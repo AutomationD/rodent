@@ -151,7 +151,7 @@ def dns(type='A', name_server='localhost'):
                 (output, err) = process.communicate()
 
                 logging.debug("output: " + str(output))
-                
+
                 if err:
                     logging.debug("err: " + str(err))
 
@@ -185,6 +185,9 @@ def dns(type='A', name_server='localhost'):
             result['response_code'] = 501
             logging.error(result['message'])
         return make_response(jsonify({'result': result['message']}), result['response_code'])
+
+
+    ### POST: ###
     elif request.method == 'POST':
 
         # fqdn=test15.docstoc.corp&value=192.168.5.1&type=A
@@ -197,11 +200,11 @@ def dns(type='A', name_server='localhost'):
                 name_server = request.args.get('name_server')
 
             if not fqdn:
-                return make_response(jsonify({'error': 'fqdn must be present'}), 404)
+                return make_response(jsonify({'error': '"fqdn" variable must be present'}), 404)
             if not value:
-                return make_response(jsonify({'error': 'value must be present'}), 404)
+                return make_response(jsonify({'error': '"value" variable must be present (IP, CNAME host, etc)'}), 404)
             if not type:
-                return make_response(jsonify({'error': 'type must be present'}), 404)
+                return make_response(jsonify({'error': '"type" variable must be present (A, CNAME, etc)'}), 404)
 
             zone = dns.name.from_text(fqdn).split(3)[1].to_text(omit_final_dot=True)
 
@@ -218,7 +221,8 @@ def dns(type='A', name_server='localhost'):
 
                 logging.debug("output: \n" + output)
 
-                logging.debug("err: \n" + err)
+                if err:
+                    logging.debug("err: \n" + err)
 
                 result['exit_code'] = process.wait()
 
@@ -247,6 +251,7 @@ def dns(type='A', name_server='localhost'):
             result['response_code'] = 501
             logging.error(result['message'])
         return make_response(jsonify({'result': result['message']}), result['response_code'])
+    ### :POST ###
 
 def dns_found(fqdn, type):
     import dns.name
