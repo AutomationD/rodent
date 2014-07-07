@@ -114,9 +114,8 @@ def test_start(test_id):
 ###################### <jdog ######################
 
 ###################### DNS> ######################
-@app.route('/dns/', methods=['POST','DELETE'])
+@app.route('/dns/', methods=['POST', 'DELETE'])
 def remove_dns(type='A', name_server='localhost'):
-    import struct
     import dns.name
     import dns.resolver
     result = {}
@@ -248,29 +247,31 @@ def dns_found(fqdn, type):
     import dns.name
     import dns.resolver
 
-    logging.debug("Checking if" + fqdn + "type " + type + "exists")
+    logging.debug("Checking if " + fqdn + " type " + type + " exists")
 
     resolver = dns.resolver.Resolver(configure=False)
 
-    if not config.DNS_SERVER_IP:
-        dns_server_ip = '127.0.0.1'
-    else:
-        dns_server_ip = config.DNS_SERVER_IP
 
-    logging.debug("Using DNS server:" + dns_server_ip)
-    resolver.nameservers = [dns_server_ip, ]
+    if not config.DNS_SERVER_IP:
+        config.DNS_SERVER_IP = '127.0.0.1'
+
+    logging.debug("Using DNS server: " + config.DNS_SERVER_IP)
+    resolver.nameservers = [config.DNS_SERVER_IP, ]
 
     try:
-        resolver.timeout = 5
-        resolver.lifetime = 10
+        #resolver.timeout = 5
+        #resolver.lifetime = 10
+        logging.debug("Querying " + config.DNS_SERVER_IP + " for " + fqdn)
         result = resolver.query(fqdn, type)
-        logging.debug(fqdn, "resolved to", result)
+
+        logging.debug(fqdn + "resolved to" + str(result[0]))
 
         if result:
             return True
         else:
             return False
-    except:
+    except dns.exception.DNSException:
+        logging.debug("Can't resolve " + fqdn + " on " + config.DNS_SERVER_IP)
         return False
 ###################### <DNS ######################
 
@@ -281,6 +282,7 @@ def not_found(error):
 
 
 def is_64_bit():
+    import struct
     if (8 * struct.calcsize("P")) == 32:
         return False
     if (8 * struct.calcsize("P")) == 64:
@@ -289,4 +291,35 @@ def is_64_bit():
 
 
 if __name__ == '__main__':
+    #print dns_found('www.google.com', "A")
+    # import dns.name
+    # import dns.resolver
+    #
+    # fqdn = 'www.google.com'
+    # type = 'A'
+    # logging.debug("Checking if " + fqdn + " type " + type + " exists")
+    #
+    # resolver = dns.resolver.Resolver(configure=False)
+    #
+    #
+    # if not config.DNS_SERVER_IP:
+    #     config.DNS_SERVER_IP = '127.0.0.1'
+    #
+    # logging.debug("Using DNS server: " + config.DNS_SERVER_IP)
+    # resolver.nameservers = [config.DNS_SERVER_IP, ]
+    #
+    # # try:
+    # resolver.timeout = 5
+    # resolver.lifetime = 10
+    # logging.debug("Querying " + str(config.DNS_SERVER_IP) + " for " + fqdn)
+    # result = resolver.query(fqdn, type)
+    # logging.debug(fqdn + "resolved to " + str(result[0]))
+    #
+    # if result:
+    #     print True
+    # else:
+    #     print False
+    # # except:
+    # #     logging.debug("Can't resolve " + fqdn + " on " + config.DNS_SERVER_IP)
+    # #     print False
     app.run(host=config.BIND_IP)
