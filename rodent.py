@@ -115,10 +115,11 @@ def test_start(test_id):
 
 ###################### DNS> ######################
 @app.route('/dns/', methods=['POST', 'DELETE'])
-def remove_dns(type='A', name_server='localhost'):
+def dns(type='A', name_server='localhost'):
     import dns.name
     import dns.resolver
     result = {}
+
     if request.method == 'DELETE':
         # fqdn=test15.docstoc.corp&value=192.168.5.1&type=A
         if os.name == 'nt':
@@ -149,9 +150,9 @@ def remove_dns(type='A', name_server='localhost'):
                 process = Popen(command, stdout=PIPE)
                 (output, err) = process.communicate()
 
-                logging.debug("output: \n" + output)
+                logging.debug("output: " + str(output))
 
-                logging.debug("err: \n" + err)
+                logging.debug("err: " + str(err))
 
                 result['exit_code'] = process.wait()
 
