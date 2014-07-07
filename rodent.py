@@ -151,8 +151,12 @@ def dns(type='A', name_server='localhost'):
                 (output, err) = process.communicate()
 
                 logging.debug("output: " + str(output))
+                
+                if err:
+                    logging.debug("err: " + str(err))
 
-                logging.debug("err: " + str(err))
+
+
 
                 result['exit_code'] = process.wait()
 
