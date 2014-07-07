@@ -13,6 +13,7 @@ import os
 from subprocess import Popen, PIPE
 from flask import Flask
 from flask import jsonify, make_response, request, abort
+import json
 import logging
 
 from Queue import Queue
@@ -39,6 +40,16 @@ tasks = Queue(maxsize=0)
 
 ## global (replace by configuration params)
 # server = 'ns1.docstoc.corp'
+
+###################### features: ######################
+@app.route('/features/', methods=['GET'])
+def features():
+    if request.method == 'GET':
+        features = ['dns', 'jdog']
+        return make_response(json.dumps(features))
+
+
+###################### :features ######################
 
 
 ###################### jdog: ######################
@@ -110,7 +121,6 @@ def test_start(test_id):
     ## Start Timer
 
     ## IF Timer not stopped - ERORRRRRR!
-
 ###################### :jdog ######################
 
 ###################### DNS: ######################
@@ -120,6 +130,7 @@ def dns(type='A', name_server='localhost'):
     import dns.resolver
     result = {}
 
+    ### DELETE: ###
     if request.method == 'DELETE':
         # fqdn=test15.docstoc.corp&value=192.168.5.1&type=A
         if os.name == 'nt':
@@ -185,6 +196,7 @@ def dns(type='A', name_server='localhost'):
             result['response_code'] = 501
             logging.error(result['message'])
         return make_response(jsonify({'result': result['message']}), result['response_code'])
+    ### :DELETE ###
 
 
     ### POST: ###
