@@ -41,7 +41,7 @@ tasks = Queue(maxsize=0)
 # server = 'ns1.docstoc.corp'
 
 
-###################### jdog> ######################
+###################### jdog: ######################
 @app.route('/jdog/test/<int:test_id>', methods=['GET'])
 def test_get(test_id):
     tasks
@@ -111,9 +111,9 @@ def test_start(test_id):
 
     ## IF Timer not stopped - ERORRRRRR!
 
-###################### <jdog ######################
+###################### :jdog ######################
 
-###################### DNS> ######################
+###################### DNS: ######################
 @app.route('/dns/', methods=['POST', 'DELETE'])
 def dns(type='A', name_server='localhost'):
     import dns.name
@@ -283,7 +283,7 @@ def dns_found(fqdn, type):
     except dns.exception.DNSException:
         logging.debug("Can't resolve " + fqdn + " on " + config.DNS_SERVER_IP)
         return False
-###################### <DNS ######################
+###################### :DNS ######################
 
 @app.errorhandler(404)
 def not_found(error):
