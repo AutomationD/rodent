@@ -46,7 +46,7 @@ docs/_build/
 # IntelliJ projects
 .idea
 .idea/*
-.iml
+*.iml
 
 # Selenium
 selenium-server-standalone.jar
