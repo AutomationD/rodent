@@ -39,14 +39,14 @@ app = Flask(__name__)
 tasks = Queue(maxsize=0)
 
 ## global (replace by configuration params)
-# server = 'ns1.docstoc.corp'
+# server = 'ns1.domain.corp'
 
 ###################### features: ######################
 @app.route('/features/', methods=['GET'])
 def features():
     if request.method == 'GET':
         features = ['dns', 'jdog']
-        return make_response(json.dumps(features))
+        return make_response(json.dumps(featurest))
 
 
 ###################### :features ######################
@@ -132,7 +132,7 @@ def dns(type='A', name_server='localhost'):
 
     ### DELETE: ###
     if request.method == 'DELETE':
-        # fqdn=test15.docstoc.corp&value=192.168.5.1&type=A
+        # fqdn=test15.domain.corp&value=192.168.5.1&type=A
         if os.name == 'nt':
 
             fqdn = request.args.get('fqdn')
@@ -202,7 +202,7 @@ def dns(type='A', name_server='localhost'):
     ### POST: ###
     elif request.method == 'POST':
 
-        # fqdn=test15.docstoc.corp&value=192.168.5.1&type=A
+        # fqdn=test15.domain.corp&value=192.168.5.1&type=A
         if os.name == 'nt':
 
             fqdn = request.args.get('fqdn')

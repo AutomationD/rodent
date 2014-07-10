@@ -44,4 +44,10 @@ coverage.xml
 docs/_build/
 
 # IntelliJ projects
+.idea
 .idea/*
+.iml
+
+# Selenium
+selenium-server-standalone.jar
+chromedriver
