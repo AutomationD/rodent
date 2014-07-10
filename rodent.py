@@ -55,7 +55,7 @@ def features():
 ###################### jdog: ######################
 @app.route('/jdog/test/<int:test_id>', methods=['GET'])
 def test_get(test_id):
-    tasks
+    return True
 
 
 @app.route('/jdog/test/<int:test_id>/stop', methods=['POST'])
