@@ -1,127 +1,15 @@
-# coding: interpy
-# -*- coding: utf-8 -*-
-
-from __future__ import unicode_literals
 __author__ = 'dmitry'
 
+
 import config
-
-
-import re
-import sys
 import os
-from subprocess import Popen, PIPE
-from flask import Flask
-from flask import jsonify, make_response, request, abort
-import json
 import logging
+from app import app
+from flask import jsonify, make_response, request
 
-from Queue import Queue
-
-
-
-
-## Logging
-logging.basicConfig(format='%(asctime)s %(message)s', filename='rodent.log', level=logging.DEBUG, stream=sys.stdout)
-root = logging.getLogger()
-root.setLevel(logging.DEBUG)
-ch = logging.StreamHandler(sys.stdout)
-ch.setLevel(logging.DEBUG)
-#formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-formatter = logging.Formatter('%(message)s')
-ch.setFormatter(formatter)
-root.addHandler(ch)
+logger = logging.getLogger('root')
 
 
-app = Flask(__name__)
-
-
-tasks = Queue(maxsize=0)
-
-## global (replace by configuration params)
-# server = 'ns1.domain.corp'
-
-###################### features: ######################
-@app.route('/features/', methods=['GET'])
-def features():
-    if request.method == 'GET':
-        features = ['dns', 'jdog']
-        return make_response(json.dumps(featurest))
-
-
-###################### :features ######################
-
-
-###################### jdog: ######################
-@app.route('/jdog/test/<int:test_id>', methods=['GET'])
-def test_get(test_id):
-    return True
-
-
-@app.route('/jdog/test/<int:test_id>/stop', methods=['POST'])
-def test_stop(test_id):
-    # Stop the test with no timeout error
-    return True
-
-
-@app.route('/jdog/test/<int:test_id>/start/', methods=['POST'])
-def test_start(test_id):
-    import uuid
-    import time
-    import signal
-    from selenium import webdriver
-
-    logging.debug("test_id: " + str(test_id))
-    result = {}
-
-
-    os.environ['SELENIUM_SERVER_JAR'] = os.path.join(os.path.dirname(os.path.realpath(__file__)), "selenium-server-standalone.jar")
-
-
-    #Following are optional required
-    from selenium.webdriver.common.by import By
-    from selenium.webdriver.support.ui import Select
-    from selenium.common.exceptions import NoSuchElementException
-
-
-    if not test_id:
-        return make_response(jsonify({'error': 'test_id must be present'}), 500)
-
-    baseurl = "http://stg.quickbookslicenses.com/jdog/integration/endToEndRegistration.html?"+"&test_id="+str(test_id)
-
-    ## Spawn each driver in a separate python queue, that will have test_id in it.
-
-
-
-
-    driver = webdriver.Chrome(os.path.join(os.path.dirname(os.path.realpath(__file__)), "chromedriver"))
-    time.sleep(3)
-    driver.get(baseurl)
-    driver.close()
-    #
-    # driver = webdriver.Firefox()
-    #
-    # time.sleep(3)
-    # driver.get(baseurl)
-    # # driver.close()
-    #
-    # driver = webdriver.Safari()
-    # time.sleep(3)
-    # driver.get(baseurl)
-
-    result['message'] = 'Started id:' + str(test_id), driver.session_id
-    result['response_code'] = 200
-    logging.debug(result['message'])
-
-    return make_response(jsonify({'result': result['message']}), result['response_code'])
-
-    tasks.put(task_id)
-
-
-    ## Start Timer
-
-    ## IF Timer not stopped - ERORRRRRR!
-###################### :jdog ######################
 
 ###################### DNS: ######################
 @app.route('/dns/', methods=['POST', 'DELETE'])
@@ -297,51 +185,3 @@ def dns_found(fqdn, type):
         return False
 ###################### :DNS ######################
 
-@app.errorhandler(404)
-def not_found(error):
-    return make_response(jsonify({'error': 'Not found' }), 404)
-
-
-
-def is_64_bit():
-    import struct
-    if (8 * struct.calcsize("P")) == 32:
-        return False
-    if (8 * struct.calcsize("P")) == 64:
-        return True
-
-
-
-if __name__ == '__main__':
-    #print dns_found('www.google.com', "A")
-    # import dns.name
-    # import dns.resolver
-    #
-    # fqdn = 'www.google.com'
-    # type = 'A'
-    # logging.debug("Checking if " + fqdn + " type " + type + " exists")
-    #
-    # resolver = dns.resolver.Resolver(configure=False)
-    #
-    #
-    # if not config.DNS_SERVER_IP:
-    #     config.DNS_SERVER_IP = '127.0.0.1'
-    #
-    # logging.debug("Using DNS server: " + config.DNS_SERVER_IP)
-    # resolver.nameservers = [config.DNS_SERVER_IP, ]
-    #
-    # # try:
-    # resolver.timeout = 5
-    # resolver.lifetime = 10
-    # logging.debug("Querying " + str(config.DNS_SERVER_IP) + " for " + fqdn)
-    # result = resolver.query(fqdn, type)
-    # logging.debug(fqdn + "resolved to " + str(result[0]))
-    #
-    # if result:
-    #     print True
-    # else:
-    #     print False
-    # # except:
-    # #     logging.debug("Can't resolve " + fqdn + " on " + config.DNS_SERVER_IP)
-    # #     print False
-    app.run(host=config.BIND_IP)

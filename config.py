@@ -1,4 +1,22 @@
+# coding: interpy
+# -*- coding: utf-8 -*-
+
+from __future__ import unicode_literals
 import os
+import logging
+import sys
+
+## Logging
+def setup_custom_logger():
+    logging.basicConfig(format='%(asctime)s %(message)s', filename='rodent.log', level=logging.DEBUG, stream=sys.stdout)
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setLevel(logging.DEBUG)
+    logger.addHandler(ch)
+    return logger
+
 
 # Statement for enabling the development environment
 DEBUG = True
