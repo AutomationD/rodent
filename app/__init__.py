@@ -2,24 +2,35 @@
 __author__ = 'dmitry'
 
 import config
-import app.db as db
+# import app.db as db
 
 from flask import Flask
+from flask.ext.sqlalchemy import SQLAlchemy
 from flask import jsonify, make_response, request
 import json
+
+
 
 logger = config.setup_custom_logger()
 
 
 app = Flask(__name__)
 
-# Configurations
+
+# # Configurations
 app.config.from_object('config')
 
+# Db init
+db = SQLAlchemy(app)
+import models
+
+db.create_all()
 
 # Static modules import
 from app.modules import jdog
 from app.modules import dns
+
+
 
 # import app.modules.dns
 

@@ -1,7 +1,6 @@
-# coding: interpy
 # -*- coding: utf-8 -*-
-
 from __future__ import unicode_literals
+
 import os
 import logging
 import sys
@@ -16,6 +15,8 @@ def setup_custom_logger():
     ch.setLevel(logging.DEBUG)
     logger.addHandler(ch)
     return logger
+
+
 
 
 # Statement for enabling the development environment
@@ -33,3 +34,12 @@ DNS_ENABLED = True
 #DNS_SERVER_IP = '192.168.1.11'
 # DNS_SERVER_IP = '8.8.8.8'
 DNS_SERVER_IP = '127.0.0.1'
+
+### jdog config ###
+# USE_SELENIUM (True/False)
+USE_SELENIUM = True
+
+
+
+SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(BASE_DIR, 'app.db')
+SQLALCHEMY_MIGRATE_REPO = os.path.join(BASE_DIR, 'db_repository')

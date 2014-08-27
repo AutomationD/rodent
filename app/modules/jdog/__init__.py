@@ -9,79 +9,59 @@ import shutil
 import platform
 import json
 
+from pprint import pprint
+
+
+import config
+
 from flask import jsonify, make_response, request
 from app import app
-import app.db as db
 import threading
-# from jsonschema import validate
-import subprocess
 
-from pprint import pprint
+from app.modules.jdog import native
+from app.modules.jdog import selenium
+from app.models import Test, TestResults
+from app import db
 
 logger = logging.getLogger()
 
-# TODO:
-"""
-- Generate test uid (or id - will be used in browser/profiles
-- Make sure browser is ready to run in a new profile
-    - Create a separate executable
-    - Be able to start a browser with a profile
-√ Be able to store data in a local db (test_id, status, ...)
-- Be able to control browser
-    - Start app
-    - Kill all process with a known process name (that contains test id)
-"""
 
 
 ###################### jdog: ######################
 # TODO: Create a loop that will pick first item in the queue (db - queued) and run test_start on their id
 
 
-# Test runner
-def test_start(test_id):
-    result = {}
-    command = test_init(test_id)
-    # TODO: set task status to 'starting' and start a different thread
-    result = command
-    # result = test_get(test_id)
-    return result
-
-def test_init(test_id):
-    # TODO: Set up browser environment
-
-    while( True ):
-        pass
-
-    if platform.system() == 'Darwin':
-        src_dir = '/Applications/Google Chrome.app/'
-        dst_dir = "/Applications/Google Chrome-jdog-test-{test_id}.app/".format(test_id=test_id)
-
-        if not os.path.exists(dst_dir):
-            shutil.copytree(src_dir, dst_dir)
-        else:
-            logging.debug("{dst_dir} Already exists".format(dst_dir=dst_dir))
-
-    return command
+@app.route('/jdog/<int:test_id>/status', methods=['get'])
+def test_status(test_id):
+    thread_count = threading.active_count()
+    return str(thread_count)
 
 # Create a new test
-
 @app.route('/jdog/create', methods=['POST'])
 def test_create():
     result = {}
     # TODO: Add json validation
-
     # if request.json['name'] and request.json['projectName'] and request.json['url'] and request.json['timeout']:
+
     if request:
-        result = db.test_create(request.json['name'], request.json['projectName'], request.json['url'], request.json['timeout'])
-    else:
-        result = {'result': 'error'}
+        test = Test('myname', 'project_name', 'http://test_url', 40, 'initializing')
+        db.session.add(test)
+        db.session.commit()
+        result = test.to_dict()
+
+    # else:
+    #     result = {'result': 'error'}
+
+    # If selenium was chosen
+    # if config.USE_SELENIUM:
+    #     # thread = threading.Thread(target=selenium.test_start, args=(result['id'],))
+    #     thread = threading.Thread(target=selenium.test_start, args=(10,))
+    # else:
+    #     thread = threading.Thread(target=native.test_start, args=(result['id'],))
+    #
+    # thread.start()
 
 
-    # TODO: Send task to a worker that will pick up queued item and start processing it. ->
-    thread = threading.Thread(target=test_start, args=(result['id'],))
-    thread.start()
-
-    result['status'] = 'initializing'
 
     # TODO: ??? Check if test with the same name exists???
 
@@ -89,19 +69,27 @@ def test_create():
 
 @app.route('/jdog/<int:test_id>', methods=['GET'])
 def test_get(test_id):
-    test = db.test_get(test_id)
+    test = (Test.query.get(test_id)).to_dict()
 
     result = test
     return make_response(json.dumps(result))
 
 @app.route('/jdog/list/', methods=['GET'])
 def tests_list():
+    results = {}
     # TODO: Get list of queued tests (?filter=queued, ?filter=current)
     if request.args.get('filter'):
-        tests_list = db.tests_list_get(request.args.get('filter'))
+        # tests_list = db.tests_list_get(request.args.get('filter'))
+        tests_list = Test.query.filter_by(status=request.args.get('filter'))
+
     else:
-        tests_list = db.tests_list_get()
-    return make_response(json.dumps(tests_list))
+        tests_list = Test.query.all()
+
+    for test in tests_list:
+        results[test.to_dict()['id']] = test.to_dict()
+    pprint(results)
+
+    return make_response(json.dumps(results))
 
 ### /stop vs /finish?????
 # Stop task (kill browsers for a test)
@@ -109,18 +97,66 @@ def tests_list():
 def test_stop(test_id):
     result = {}
 
-    test = db.test_get(test_id)
 
-    return make_response(json.dumps(test))
+    # TODO: Check if test is already stopped
+    test = Test.query.get(test_id)
+    test.status = 'stopped'
+    db.session.commit()
 
-### /stop vs /finish?????
+    result = test.to_dict()
+    return make_response(json.dumps(result))
+
+@app.route('/jdog/<int:test_id>/start', methods=['GET'])
+def test_start(test_id):
+    result = {}
+
+
+    # TODO: Check if test is already stopped
+    test = Test.query.get(test_id)
+    test.status = 'started'
+    db.session.commit()
+
+    result = test.to_dict()
+    return make_response(json.dumps(result))
+
+@app.route('/jdog/<int:test_id>/results', methods=['get'])
+def test_result(test_id):
+    result = {}
+    results_rows = TestResults.query.filter_by(test_id=test_id)
+
+    if results_rows.count():
+        for results in results_rows:
+            result[results.to_dict()['id']] = results.to_dict()
+    else:
+        result = {'result': 'no rows'}
+
+    return make_response(json.dumps(result))
+
+
+### /stop vs /finish????? >>>> finish saves whatever result was passed and stops
 @app.route('/jdog/<int:test_id>/finish', methods=['GET'])
 def test_finish(test_id):
     result = {}
+    if request.args.get('result_message'):
+        result_message = request.args.get('result_message')
+    else:
+        result_message = 'none'
 
-    test = db.test_get(test_id)
 
-    result = {'status': 1, 'test': test}
+    if request.args.get('result'):
+
+        test_result = TestResults(test_id, request.args.get('result'), result_message)
+        db.session.add(test_result)
+        result = test_result.to_dict()
+        db.session.commit()
+
+
+
+
+
+
+
+
     return make_response(json.dumps(result))
 
 
@@ -140,10 +176,20 @@ def tests_stop_all():
 def test_clear_queue(test_id):
     result = {}
 
-    test = db.test_get(test_id)
+    db.data.append({'name': 'data'})
+    test = db.data
 
     result = {'status': 1, 'test': test}
     return make_response(json.dumps(result))
+
+@app.route('/jdog/info', methods=['GET'])
+def info_get():
+    result = {}
+    # db.data['a'] = ('yourname', 'George')
+    test = db.data
+
+
+    return make_response(test)
 
 
 # @app.route('/jdog/<int:test_id>/start/', methods=['POST'])
