@@ -42,4 +42,6 @@ USE_SELENIUM = True
 
 
 SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(BASE_DIR, 'app.db')
+# SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+
 SQLALCHEMY_MIGRATE_REPO = os.path.join(BASE_DIR, 'db_repository')

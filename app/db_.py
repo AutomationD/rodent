@@ -69,19 +69,10 @@ class Db:
 
 
 def test_create(name, project_name, url, timeout, status='queued'):
-    query = '''INSERT INTO tests (name, project_name, url, timeout, status) VALUES
-                    ('{name}', '{project_name}', '{url}', {timeout}, '{status}')'''.format(name=name,
-                                                                                           project_name=project_name,
-                                                                                           url=url, timeout=timeout,
-                                                                                           status=status)
-    logging.debug(query)
-    db = Db('rodent.db')
-
-    db.query(query)
-
     test = {'id': db.get_last_id(), 'name': name, 'projectName': project_name, 'url': url, 'timeout': timeout, 'status': status}
 
-    db.close()
+
+
     return test
 
 

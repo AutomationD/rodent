@@ -40,4 +40,4 @@ if __name__ == '__main__':
     # #     logging.debug("Can't resolve " + fqdn + " on " + config.DNS_SERVER_IP)
     # #     print False
 
-    app.run(host=config.BIND_IP, debug=config.DEBUG)
+    app.run(host=config.BIND_IP, debug=config.DEBUG, threaded=True)

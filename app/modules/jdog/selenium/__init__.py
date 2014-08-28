@@ -7,8 +7,9 @@ from selenium.common.exceptions import NoSuchElementException
 import time
 import logging
 from flask import jsonify, make_response, request
-
+from app import db
 from pprint import pprint
+from app.models import Test, TestResults
 
 
 
@@ -16,12 +17,16 @@ from pprint import pprint
 
 def test_start(test_id):
     result = {}
+    test = Test.query.get(test_id)
+    test.status = 'started'
+    db.session.commit()
+
     # test = db.test_get(test_id)
 
 
     driver = webdriver.Chrome(os.path.join(os.path.dirname(os.path.realpath(__file__)), "chromedriver_mac32"))
     time.sleep(3)
-    # driver.get(test['url'])
+    driver.get(test.url)
     driver.close()
 
 
@@ -36,8 +41,11 @@ def test_start(test_id):
     # time.sleep(3)
     # driver.get(baseurl)
 
-    result['message'] = 'Started id:' + str(test_id), driver.session_id
+
+
+    result = {'result': 'success', 'message': 'Started id:' + str(test.id) + ' ' + driver.session_id}
     # result['response_code'] = 200
     # logging.debug(result['message'])
     # db.DbDict.data.append({'name': 'data'})
+
     return result
