@@ -24,7 +24,9 @@ def test_start(test_id):
     # test = db.test_get(test_id)
 
 
-    driver = webdriver.Chrome(os.path.join(os.path.dirname(os.path.realpath(__file__)), "chromedriver_mac32"))
+    driver_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "chromedriver_mac32")
+    logging.debug("chrome_driver path: " + driver_path)
+    driver = webdriver.Chrome(driver_path)
     time.sleep(3)
     driver.get(test.url)
     driver.close()
