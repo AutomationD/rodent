@@ -87,10 +87,13 @@ def test_get_result(test_id):
 
     time.sleep(test.timeout)
 
-    print("Waited. Moving on")
+    print("Timer thread has waited. Moving on")
     logger.debug("Getting currend result")
     # Get current status of the test
     test = Test.query.get(test_id)
+    if test:
+        logger.debug("test status in DB: " + test.status)
+
     if test.status != 'passed':
         print("Timeout!")
         test.status = 'failed'

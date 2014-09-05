@@ -15,6 +15,7 @@ from app.models import Test, TestResults
 
 
 
+
 def test_start(test_id):
     result = {}
     test = Test.query.get(test_id)
@@ -28,7 +29,9 @@ def test_start(test_id):
     logging.debug("chrome_driver path: " + driver_path)
     driver = webdriver.Chrome(driver_path)
     time.sleep(3)
-    driver.get(test.url)
+
+    ## Temp variable - change to actual url param
+    driver.get(test.url + '?job='+test_id)
     driver.close()
 
 
