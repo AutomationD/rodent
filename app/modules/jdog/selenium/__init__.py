@@ -13,7 +13,7 @@ from app.models import Test, TestResults
 
 
 
-# os.environ['SELENIUM_SERVER_JAR'] = os.path.join(os.path.dirname(os.path.realpath(__file__)), "selenium-server-standalone.jar")
+
 
 def test_start(test_id):
     result = {}
