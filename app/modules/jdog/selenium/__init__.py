@@ -31,7 +31,7 @@ def test_start(test_id):
     test.status = 'started'
     db.session.commit()
 
-    time.sleep(3)
+    time.sleep(test.timeout)
     driver.close()
 
 
