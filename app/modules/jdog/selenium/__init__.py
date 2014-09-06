@@ -12,36 +12,42 @@ from pprint import pprint
 from app.models import Test, TestResults
 
 
-
-
-
-
 def test_start(test_id):
     result = {}
     test = Test.query.get(test_id)
-    test.status = 'started'
-    db.session.commit()
 
     # test = db.test_get(test_id)
 
+    base_url = test.url + '?job='+str(test_id)
 
+    ## Chrome Test
     driver_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "chromedriver_mac32")
     logging.debug("chrome_driver path: " + driver_path)
     driver = webdriver.Chrome(driver_path)
     time.sleep(3)
 
-    ## Temp variable - change to actual url param
-    driver.get(test.url + '?job='+test_id)
+    driver.get(base_url)
+    driver.switch_to.default_content()
+    test.status = 'started'
+    db.session.commit()
+
+    time.sleep(3)
     driver.close()
 
 
-    #
+
+    ## Firefox Test
     # driver = webdriver.Firefox()
     #
     # time.sleep(3)
-    # driver.get(baseurl)
-    # # driver.close()
+    # driver.get(base_url)
+    # test.status = 'started'
+    # db.session.commit()
     #
+    # driver.close()
+
+
+    ## Safari Test
     # driver = webdriver.Safari()
     # time.sleep(3)
     # driver.get(baseurl)

@@ -81,11 +81,14 @@ def crossdomain(origin=None, methods=None, headers=None,
 
 def test_get_result(test_id):
     test = Test.query.get(test_id)
+
+
     # Wait to check status
     print("Waiting {test_timeout}".format(test_timeout=test.timeout))
     print("So far result is {test_result}".format(test_result=test.status))
 
     time.sleep(test.timeout)
+    db.session.commit()
 
     print("Timer thread has waited. Moving on")
     logger.debug("Getting currend result")
@@ -165,12 +168,14 @@ def test_start(test_id):
         if test.status != 'started' and test.status != 'starting':
             if config.USE_SELENIUM:
                 # thread = threading.Thread(target=selenium.test_start, args=(result['id'],))
+                test.status = 'starting'
+                db.session.commit()
                 test_thread = threading.Thread(target=selenium.test_start, args=(test_id,))
             else:
                 test_thread = threading.Thread(target=native.test_start, args=(test_id,))
 
-            test.status = 'starting'
-            db.session.commit()
+
+
             test_thread.start()
 
 
@@ -232,12 +237,13 @@ def test_finish(test_id):
         # Set status of the test
         test.status = request.args.get('result')
         print("Test #{test_id} status saved: {test_status}".format(test_id=test_id, test_status=test.status))
-
-        # Write test history
-        test_result = TestResults(test_id, request.args.get('result'), result_message)
-        db.session.add(test_result)
-        result = test_result.to_dict()
         db.session.commit()
+
+        # # Write test history
+        # test_result = TestResults(test_id, request.args.get('result'), result_message)
+        # db.session.add(test_result)
+        # result = test_result.to_dict()
+        # db.session.commit()
 
     return make_response(json.dumps(result))
 

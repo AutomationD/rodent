@@ -17,7 +17,7 @@ class Test(db.Model, _Base):
     project_name = db.Column(db.String(120))
     url = db.Column(db.String(1024))
     timeout = db.Column(db.Integer)
-    status = db.Column(db.Integer)
+    status = db.Column(db.String(1024))
 
     def __init__(self, name, project_name, url, timeout, status):
         self.name = name
